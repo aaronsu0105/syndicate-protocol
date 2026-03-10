@@ -14,7 +14,7 @@ import { motion, AnimatePresence, useScroll, useTransform, useSpring, useTime } 
 import { 
   Building2, Activity, Boxes, Search, 
   Network, Cpu, Lock, ExternalLink, Sparkles, BarChart3, LineChart, ArrowUpRight, CheckCircle2, AlertTriangle,
-  Globe, Info, Filter, ChevronDown
+  Globe, Info, Filter, ChevronDown, ShieldAlert, Banknote
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -41,7 +41,6 @@ function FractalLogo({ className }) {
   );
 }
 
-// NEW: Professional Tooltip for Financial Jargon
 function Tooltip({ children, content }) {
   return (
     <div className="relative group inline-flex items-center justify-center cursor-help">
@@ -54,7 +53,6 @@ function Tooltip({ children, content }) {
   );
 }
 
-// NEW: Institutional Financial Marquee
 function NetworkTicker() {
   return (
     <div className="fixed top-0 left-0 w-full bg-[#02040a] border-b border-blue-500/20 overflow-hidden z-[110] h-8 flex items-center">
@@ -63,7 +61,6 @@ function NetworkTicker() {
         transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
         className="flex gap-16 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 w-max"
       >
-        {/* We repeat the content twice to create an infinite seamless scrolling loop */}
         {[...Array(2)].map((_, i) => (
           <React.Fragment key={i}>
             <span className="flex items-center gap-2"><Globe className="w-3 h-3" /> NETWORK: SEPOLIA TESTNET</span>
@@ -84,7 +81,7 @@ function NetworkTicker() {
 }
 
 // ==========================================
-// 1. SMART CONTRACT ABIs 
+// 1. SMART CONTRACT ABIs (UPDATED!)
 // ==========================================
 const FACTORY_ABI = [
   { "inputs": [{ "type": "string", "name": "_assetName" }, { "type": "uint256", "name": "_fundingGoal" }], "name": "createPool", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
@@ -98,7 +95,10 @@ const POOL_ABI = [
   { "inputs": [], "name": "totalFunded", "outputs": [{ "type": "uint256" }], "stateMutability": "view", "type": "function" },
   { "inputs": [], "name": "isClosed", "outputs": [{ "type": "bool" }], "stateMutability": "view", "type": "function" },
   { "inputs": [{"internalType": "address", "name": "", "type": "address"}], "name": "investorDeposits", "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}], "stateMutability": "view", "type": "function" },
-  { "inputs": [], "name": "liquidatePosition", "outputs": [], "stateMutability": "nonpayable", "type": "function" }
+  { "inputs": [], "name": "liquidatePosition", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  // --- NEW MANAGER FUNCTIONS ADDED HERE ---
+  { "inputs": [], "name": "triggerLiquidation", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+  { "inputs": [], "name": "depositRevenue", "outputs": [], "stateMutability": "payable", "type": "function" }
 ];
 
 // ==========================================
@@ -262,7 +262,6 @@ function ProjectCard({ contractAddress, index }) {
         </div>
         <h3 className="text-4xl font-black text-white mb-6 leading-tight uppercase italic text-center sm:text-left">{assetName}</h3>
         
-        {/* ENHANCED UI: Interactive Tooltip for SPV explanation */}
         <Tooltip content="Special Purpose Vehicle (SPV) allows legal fractional ownership of real-world equity via blockchain tokens.">
           <p className="text-slate-400 font-medium mb-12 text-base leading-relaxed text-center sm:text-left italic cursor-help hover:text-slate-300 transition-colors w-fit">
             Fractionalized institutional SPV representing physical real estate equity on-chain. <Info className="w-4 h-4 inline pb-1" />
@@ -371,6 +370,10 @@ function PlatformLayout() {
   const { contract: factoryContract } = useContract(FACTORY_ADDRESS, FACTORY_ABI);
   const { data: deployedPools, refetch: refetchPools } = useContractRead(factoryContract, "getAllPools");
 
+  // MANAGER DASHBOARD STATE
+  const [selectedLedger, setSelectedLedger] = useState("");
+  const [revenueAmount, setRevenueAmount] = useState("");
+
   const [portfolioInvestments, setPortfolioInvestments] = useState({});
   const handleInvestmentFetch = useCallback((pool, amount) => {
     setPortfolioInvestments(prev => {
@@ -390,14 +393,11 @@ function PlatformLayout() {
 
   return (
     <div className="min-h-screen font-sans relative selection:bg-blue-500/30 text-slate-200 pt-8">
-      {/* NEW: Institutional Network Ticker injected at the very top */}
       <NetworkTicker />
-
       <InteractiveScrollBackground />
       <Toaster position="bottom-right" />
       {activeTab === "explore" && <UnifiedCoinSwarm />}
 
-      {/* Adjusted Nav to sit below the new 8px high Ticker */}
       <nav className="absolute top-8 left-0 right-0 z-[100] border-b border-white/5 h-32 flex items-center w-full bg-transparent">
         <div className="w-full px-12 lg:px-24 flex justify-between items-center overflow-visible">
           <div className="flex items-center gap-6 cursor-pointer overflow-visible pr-12 mx-auto sm:mx-0">
@@ -468,7 +468,6 @@ function PlatformLayout() {
                    <div className="flex items-center gap-8 bg-[#0a0b12]/80 backdrop-blur-md border border-white/10 px-12 py-6 rounded-3xl text-slate-400 tracking-widest text-xs shadow-inner not-italic"><Activity className="text-emerald-500 w-6 h-6" /> NETWORK OPTIMAL</div>
                  </div>
 
-                 {/* NEW: Purely Visual Market Filtering Dashboard */}
                  <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16 bg-white/5 border border-white/10 p-4 rounded-3xl backdrop-blur-md shadow-2xl">
                     <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
                       <button className="bg-blue-600 text-white px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-lg">All Assets</button>
@@ -500,8 +499,10 @@ function PlatformLayout() {
           )}
 
           {activeTab === "admin" && (
-            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto mt-12 p-12 lg:p-16 bg-[#0a0b12]/90 backdrop-blur-3xl border border-white/10 rounded-[3rem] shadow-2xl relative overflow-hidden">
+            <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto mt-12 p-12 lg:p-16 bg-[#0a0b12]/90 backdrop-blur-3xl border border-white/10 rounded-[3rem] shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500"></div>
+              
+              {/* --- SECTION 1: PROTOCOL FACTORY --- */}
               <div className="mb-12 text-center">
                 <h2 className="text-5xl lg:text-6xl font-black text-white uppercase italic mb-4 tracking-tighter">Protocol Factory</h2>
                 <p className="text-slate-400 text-lg lg:text-xl font-bold italic tracking-tight">Originate fractionalized asset ledgers via Core v1.0.4.</p>
@@ -532,11 +533,88 @@ function PlatformLayout() {
                   document.getElementById('goalInput').value = '';
                   refetchPools(); 
                 }}
-                onError={(err) => toast.error(err.message || "Synthesis Failed", { style: { borderRadius: '20px', background: '#0a0b12', color: '#fff', border: '1px solid rgba(239,68,68,0.3)' }})}
                 className="!w-full !bg-blue-600 !py-5 !rounded-[1.5rem] !font-black !text-xl hover:!bg-blue-500 shadow-2xl transition-all shadow-blue-600/30 uppercase italic"
               >
                 Synthesize Ledger Smart Contract
               </Web3Button>
+
+              {/* --- SECTION 2: MANAGER CONTROL PANEL (NEW!) --- */}
+              <div className="mt-20 pt-16 border-t border-white/10">
+                <div className="mb-12 text-center">
+                  <h3 className="text-4xl font-black text-white uppercase italic mb-4 tracking-tighter">Active Ledger Management</h3>
+                  <p className="text-slate-400 font-bold italic tracking-tight">Execute emergency protocols or distribute rental yields directly to investors.</p>
+                </div>
+
+                <div className="space-y-8 bg-white/5 p-10 rounded-[2.5rem] border border-white/10 shadow-inner">
+                  <div className="space-y-3">
+                     <label className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] ml-4">Target Ledger Address</label>
+                     <div className="relative">
+                       <select 
+                          value={selectedLedger}
+                          onChange={(e) => setSelectedLedger(e.target.value)}
+                          className="w-full bg-black/80 border border-white/20 text-blue-400 rounded-2xl py-5 px-6 text-lg outline-none focus:border-blue-500 transition-all font-black italic appearance-none cursor-pointer"
+                       >
+                         <option value="" className="text-slate-600">Select an active ledger from the blockchain...</option>
+                         {deployedPools?.map(addr => <option key={addr} value={addr}>{addr}</option>)}
+                       </select>
+                       <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none w-6 h-6" />
+                     </div>
+                  </div>
+
+                  {selectedLedger && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+                      
+                      {/* Emergency Cancel Button */}
+                      <div className="bg-red-500/5 border border-red-500/20 p-8 rounded-3xl flex flex-col justify-between gap-6">
+                        <div>
+                          <h4 className="text-red-400 font-black uppercase tracking-widest mb-2 flex items-center gap-2"><ShieldAlert className="w-5 h-5" /> Emergency Protocol</h4>
+                          <p className="text-sm text-slate-400 font-medium italic">Instantly aborts the ledger and unlocks the Vault so all investors can claim a 100% refund of their original committed capital.</p>
+                        </div>
+                        <Web3Button 
+                          contractAddress={selectedLedger} 
+                          contractAbi={POOL_ABI}
+                          action={async (contract) => await contract.call("triggerLiquidation")} 
+                          onSuccess={() => toast.success("Ledger Aborted. Vault unlocked for refunds.", { style: { background: '#0a0b12', color: '#fff', border: '1px solid rgba(239,68,68,0.5)' }})}
+                          className="!w-full !bg-red-500/10 !text-red-400 !border !border-red-500/30 hover:!bg-red-600 hover:!text-white !font-black !py-4 !rounded-2xl transition-all uppercase tracking-widest text-sm"
+                        >
+                          Trigger Liquidation
+                        </Web3Button>
+                      </div>
+
+                      {/* Distribute Revenue Button */}
+                      <div className="bg-emerald-500/5 border border-emerald-500/20 p-8 rounded-3xl flex flex-col justify-between gap-6">
+                        <div>
+                          <h4 className="text-emerald-400 font-black uppercase tracking-widest mb-2 flex items-center gap-2"><Banknote className="w-5 h-5" /> Distribute Yield</h4>
+                          <p className="text-sm text-slate-400 font-medium italic mb-4">Inject property rental revenue or sale profits directly into the smart contract for investors to claim.</p>
+                          <input 
+                            type="number" 
+                            placeholder="Amount to inject (ETH)" 
+                            value={revenueAmount}
+                            onChange={(e) => setRevenueAmount(e.target.value)}
+                            className="w-full bg-black/50 border border-emerald-500/30 text-white rounded-xl py-3 px-4 text-sm outline-none focus:border-emerald-400 shadow-inner font-bold placeholder:text-slate-600" 
+                          />
+                        </div>
+                        <Web3Button 
+                          contractAddress={selectedLedger} 
+                          contractAbi={POOL_ABI}
+                          action={async (contract) => {
+                            if (!revenueAmount) throw new Error("Enter revenue amount");
+                            await contract.call("depositRevenue", [], { value: ethers.utils.parseEther(revenueAmount) });
+                          }} 
+                          onSuccess={() => {
+                            toast.success("Yield Injected Successfully!", { style: { background: '#0a0b12', color: '#fff', border: '1px solid rgba(16,185,129,0.5)' }});
+                            setRevenueAmount("");
+                          }}
+                          className="!w-full !bg-emerald-500/10 !text-emerald-400 !border !border-emerald-500/30 hover:!bg-emerald-600 hover:!text-white !font-black !py-4 !rounded-2xl transition-all uppercase tracking-widest text-sm"
+                        >
+                          Inject Capital
+                        </Web3Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+
             </motion.div>
           )}
           
