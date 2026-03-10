@@ -81,7 +81,7 @@ function NetworkTicker() {
 }
 
 // ==========================================
-// 1. SMART CONTRACT ABIs (UPDATED!)
+// 1. SMART CONTRACT ABIs
 // ==========================================
 const FACTORY_ABI = [
   { "inputs": [{ "type": "string", "name": "_assetName" }, { "type": "uint256", "name": "_fundingGoal" }], "name": "createPool", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
@@ -96,7 +96,6 @@ const POOL_ABI = [
   { "inputs": [], "name": "isClosed", "outputs": [{ "type": "bool" }], "stateMutability": "view", "type": "function" },
   { "inputs": [{"internalType": "address", "name": "", "type": "address"}], "name": "investorDeposits", "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}], "stateMutability": "view", "type": "function" },
   { "inputs": [], "name": "liquidatePosition", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
-  // --- NEW MANAGER FUNCTIONS ADDED HERE ---
   { "inputs": [], "name": "triggerLiquidation", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
   { "inputs": [], "name": "depositRevenue", "outputs": [], "stateMutability": "payable", "type": "function" }
 ];
@@ -361,6 +360,23 @@ function VaultPositionCard({ contractAddress, walletAddress, onFetch }) {
 }
 
 // ==========================================
+// MANAGER DASHBOARD HELPERS (NEW!)
+// ==========================================
+function LedgerOption({ contractAddress }) {
+  const { contract } = useContract(contractAddress, POOL_ABI);
+  const { data: assetName } = useContractRead(contract, "assetName");
+
+  // This formats it nicely like: "Toronto Data Center (0x123...abcd)"
+  const formattedAddress = `${contractAddress.slice(0, 6)}...${contractAddress.slice(-4)}`;
+  
+  return (
+    <option value={contractAddress}>
+      {assetName ? `${assetName} (${formattedAddress})` : `Syncing... (${formattedAddress})`}
+    </option>
+  );
+}
+
+// ==========================================
 // 7. MAIN PLATFORM WRAPPER
 // ==========================================
 function PlatformLayout() {
@@ -538,7 +554,7 @@ function PlatformLayout() {
                 Synthesize Ledger Smart Contract
               </Web3Button>
 
-              {/* --- SECTION 2: MANAGER CONTROL PANEL (NEW!) --- */}
+              {/* --- SECTION 2: MANAGER CONTROL PANEL --- */}
               <div className="mt-20 pt-16 border-t border-white/10">
                 <div className="mb-12 text-center">
                   <h3 className="text-4xl font-black text-white uppercase italic mb-4 tracking-tighter">Active Ledger Management</h3>
@@ -555,7 +571,8 @@ function PlatformLayout() {
                           className="w-full bg-black/80 border border-white/20 text-blue-400 rounded-2xl py-5 px-6 text-lg outline-none focus:border-blue-500 transition-all font-black italic appearance-none cursor-pointer"
                        >
                          <option value="" className="text-slate-600">Select an active ledger from the blockchain...</option>
-                         {deployedPools?.map(addr => <option key={addr} value={addr}>{addr}</option>)}
+                         {/* This is where your new LedgerOption component works its magic! */}
+                         {deployedPools?.map(addr => <LedgerOption key={addr} contractAddress={addr} />)}
                        </select>
                        <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none w-6 h-6" />
                      </div>
@@ -564,7 +581,6 @@ function PlatformLayout() {
                   {selectedLedger && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
                       
-                      {/* Emergency Cancel Button */}
                       <div className="bg-red-500/5 border border-red-500/20 p-8 rounded-3xl flex flex-col justify-between gap-6">
                         <div>
                           <h4 className="text-red-400 font-black uppercase tracking-widest mb-2 flex items-center gap-2"><ShieldAlert className="w-5 h-5" /> Emergency Protocol</h4>
@@ -581,7 +597,6 @@ function PlatformLayout() {
                         </Web3Button>
                       </div>
 
-                      {/* Distribute Revenue Button */}
                       <div className="bg-emerald-500/5 border border-emerald-500/20 p-8 rounded-3xl flex flex-col justify-between gap-6">
                         <div>
                           <h4 className="text-emerald-400 font-black uppercase tracking-widest mb-2 flex items-center gap-2"><Banknote className="w-5 h-5" /> Distribute Yield</h4>
