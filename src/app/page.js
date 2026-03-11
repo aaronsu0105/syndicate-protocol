@@ -14,7 +14,7 @@ import { motion, AnimatePresence, useScroll, useTransform, useSpring, useTime } 
 import { 
   Building2, Activity, Boxes, Search, 
   Network, Cpu, Lock, ExternalLink, Sparkles, BarChart3, LineChart, ArrowUpRight, CheckCircle2, AlertTriangle,
-  Globe, Info, Filter, ChevronDown, ShieldAlert, Banknote
+  Globe, Info, Filter, ChevronDown, ShieldAlert, Banknote, MapPin
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -22,6 +22,15 @@ const queryClient = new QueryClient();
 
 const FACTORY_ADDRESS = process.env.NEXT_PUBLIC_FACTORY_ADDRESS; 
 const MANAGER_ADDRESS = process.env.NEXT_PUBLIC_MANAGER_ADDRESS;
+
+// ==========================================
+// 🌟 THE FRONTEND IMAGE DICTIONARY 🌟
+// ==========================================
+const ASSET_IMAGES = {
+  "0xYourFirstContractAddressHere": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=2000", 
+  "0xYourSecondContractAddressHere": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=2000", 
+  "default": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2000" 
+};
 
 // ==========================================
 // 0. BRANDING & UI COMPONENTS
@@ -101,14 +110,13 @@ const POOL_ABI = [
 ];
 
 // ==========================================
-// 2. VOLUMETRIC ASSET LIBRARY
+// 2. VOLUMETRIC ASSET LIBRARY (Kept for hero section)
 // ==========================================
 const CRYPTO_ASSETS = [
   { id: "BTC", bg: "from-[#fcd535] to-[#f7931a]", inner: "from-[#f7931a] to-[#d67b12]", border: "border-yellow-500", rim: "#92400e", viewBox: "0 0 32 32", svg: <g transform="rotate(14 16 16)"><path d="M21.536,15.706c1.196-0.849,1.96-2.128,1.96-3.666c0-2.883-2.361-5.234-5.275-5.234h-2.096V3h-2.228v3.805h-1.63V3H10.04v3.805H7v2.228h1.826c0.669,0,1.211,0.542,1.211,1.211v11.455c0,0.669-0.542,1.211-1.211,1.211H7v2.228h3.04V29h2.228v-3.805h1.63V29h2.228v-3.805h2.893c3.087,0,5.656-2.551,5.656-5.688C24.675,17.842,23.364,16.257,21.536,15.706z M14.364,9.034h3.606c1.657,0,3.006,1.348,3.006,3.006c0,1.658-1.349,3.006-3.006,3.006h-3.606V9.034z M18.423,22.972h-4.059v-5.918h4.059c1.916,0,3.475,1.558,3.475,3.475S20.339,22.972,18.423,22.972z" fill="white"/></g> },
   { id: "ETH", bg: "from-[#a855f7] to-[#6366f1]", inner: "from-[#8b5cf6] to-[#4f46e5]", border: "border-purple-400", rim: "#3730a3", viewBox: "0 0 24 24", svg: <path d="M11.963 17.977L4.582 13.617L11.963 24L19.344 13.617L11.963 17.977zM12.075 0L4.692 12.223L12.075 16.577L19.458 12.223L12.075 0z" fill="white"/> },
   { id: "SOL", bg: "from-[#14f195] to-[#9945ff]", inner: "from-[#10b981] to-[#7c3aed]", border: "border-emerald-400", rim: "#065f46", viewBox: "0 0 100 100", svg: <g fill="white"><polygon points="28,24 92,24 72,40 8,40" /><polygon points="8,46 72,46 92,62 28,62" /><polygon points="28,68 92,68 72,84 8,84" /></g> },
-  { id: "USDC", bg: "from-[#2775ca] to-[#1a5ba8]", inner: "from-[#2775ca] to-[#1a5ba8]", border: "border-blue-400", rim: "#1e3a8a", viewBox: "0 0 100 100", svg: <g fill="none" stroke="white" strokeLinecap="round"><path d="M 23 20 A 35 35 0 0 0 23 80" strokeWidth="10" /><path d="M 77 20 A 35 35 0 0 1 77 80" strokeWidth="10" /><path d="M 62 38 C 62 24, 38 24, 38 38 C 36 54, 62 50, 62 68 C 62 82, 38 82, 38 70" strokeWidth="9" /><path d="M 50 12 L 50 88" strokeWidth="9" /></g> },
-  { id: "XRP", bg: "from-slate-800 to-slate-900", inner: "from-slate-700 to-black", border: "border-slate-500", rim: "#020617", viewBox: "0 0 100 100", svg: <path d="M80.5 7.5L50 38 19.5 7.5h-10L50 48l40.5-40.5h-10zM19.5 92.5L50 62l30.5 30.5h10L50 52 9.5 92.5h10z" fill="white"/> }
+  { id: "USDC", bg: "from-[#2775ca] to-[#1a5ba8]", inner: "from-[#2775ca] to-[#1a5ba8]", border: "border-blue-400", rim: "#1e3a8a", viewBox: "0 0 100 100", svg: <g fill="none" stroke="white" strokeLinecap="round"><path d="M 23 20 A 35 35 0 0 0 23 80" strokeWidth="10" /><path d="M 77 20 A 35 35 0 0 1 77 80" strokeWidth="10" /><path d="M 62 38 C 62 24, 38 24, 38 38 C 36 54, 62 50, 62 68 C 62 82, 38 82, 38 70" strokeWidth="9" /><path d="M 50 12 L 50 88" strokeWidth="9" /></g> }
 ];
 
 function VolumetricChip({ coin, sizeClass }) {
@@ -130,9 +138,6 @@ function VolumetricChip({ coin, sizeClass }) {
   );
 }
 
-// =====================================================================
-// 3. UNIFIED SCROLL PHYSICS 
-// =====================================================================
 function SwarmNode({ coin, index, total, smoothY, time }) {
   const baseAngle = (index / total) * Math.PI * 2;
   const x = useTransform(() => {
@@ -238,7 +243,7 @@ function InteractiveScrollBackground() {
 }
 
 // ==========================================
-// 5. PROJECT CARDS (MARKETPLACE)
+// 5. PROJECT CARDS (MARKETPLACE) - VISUALLY UPGRADED
 // ==========================================
 function ProjectCard({ contractAddress, index }) {
   const { contract } = useContract(contractAddress, POOL_ABI);
@@ -247,63 +252,65 @@ function ProjectCard({ contractAddress, index }) {
   const { data: totalFunded } = useContractRead(contract, "totalFunded");
   const { data: isClosed } = useContractRead(contract, "isClosed");
 
-  if (nameLoading) return <div className="h-[520px] bg-white/5 animate-pulse rounded-[4rem] border border-white/10" />;
+  if (nameLoading) return <div className="h-[520px] bg-white/5 animate-pulse rounded-[3rem] border border-white/10" />;
   const progress = Math.min((parseFloat(ethers.utils.formatEther(totalFunded || "0")) / parseFloat(ethers.utils.formatEther(fundingGoal || "1"))) * 100, 100) || 0;
+  
+  const imageUrl = ASSET_IMAGES[contractAddress] || ASSET_IMAGES["default"];
 
   return (
-    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className="group relative bg-[#0a0b12]/80 backdrop-blur-3xl border border-white/10 rounded-[3.5rem] p-12 shadow-2xl flex flex-col justify-between hover:border-blue-500/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.15)] transition-all duration-500">
-      <div className="relative z-10">
-        <div className="flex justify-between items-start mb-10 text-center">
-          <div className="w-18 h-18 bg-blue-600/20 rounded-2xl flex items-center justify-center border border-blue-500/30 group-hover:scale-110 transition-transform shadow-inner mx-auto sm:mx-0"><FractalLogo className="w-10 h-10" /></div>
-          <span className={`px-5 py-2 rounded-full text-xs font-black tracking-widest uppercase border ${isClosed ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-blue-500/10 text-blue-400 border-blue-500/30'}`}>
+    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className="group relative bg-[#0a0b12]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] shadow-2xl flex flex-col hover:border-blue-500/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.15)] transition-all duration-500 overflow-hidden">
+      
+      {/* 🌟 NEW: The Gorgeous Image Banner 🌟 */}
+      <div className="relative w-full h-56 overflow-hidden">
+        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
+        <img src={imageUrl} alt={assetName} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0b12] to-transparent z-10"></div>
+        <div className="absolute top-5 right-5 z-20">
+          <span className={`px-4 py-2 rounded-full text-[10px] font-black tracking-widest uppercase border backdrop-blur-md ${isClosed ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50' : 'bg-blue-500/20 text-blue-300 border-blue-500/50'}`}>
             {isClosed ? 'Syndicate Closed' : 'Live Ledger'}
           </span>
         </div>
-        <h3 className="text-4xl font-black text-white mb-6 leading-tight uppercase italic text-center sm:text-left">{assetName}</h3>
-        
-        <Tooltip content="Special Purpose Vehicle (SPV) allows legal fractional ownership of real-world equity via blockchain tokens.">
-          <p className="text-slate-400 font-medium mb-12 text-base leading-relaxed text-center sm:text-left italic cursor-help hover:text-slate-300 transition-colors w-fit">
-            Fractionalized institutional SPV representing physical real estate equity on-chain. <Info className="w-4 h-4 inline pb-1" />
-          </p>
-        </Tooltip>
+      </div>
 
-        <div className="bg-black/50 rounded-[2.5rem] p-10 border border-white/5 mb-10 shadow-inner">
-          <div className="flex justify-between mb-4">
-            <Tooltip content="The percentage of the total funding goal that has currently been pooled by investors.">
-              <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest cursor-help hover:text-blue-400 transition-colors flex items-center gap-1">Commitment <Info className="w-3 h-3" /></span>
-            </Tooltip>
-            <span className="text-blue-400 font-black text-lg">{progress.toFixed(1)}%</span>
-          </div>
-          <div className="w-full bg-slate-800 h-3 rounded-full overflow-hidden mb-8 shadow-inner"><motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="h-full bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.7)]" /></div>
-          <div className="flex justify-between text-2xl font-black text-white">
-            <p>{ethers.utils.formatEther(totalFunded || "0")} <span className="text-xs text-slate-600 uppercase font-medium tracking-tighter">ETH</span></p>
-            <Tooltip content="The maximum capital cap required to successfully close this ledger and acquire the underlying asset.">
-              <p className="text-slate-500 italic cursor-help">{ethers.utils.formatEther(fundingGoal || "0")} <span className="text-xs text-slate-600 uppercase font-bold tracking-tighter">Target</span></p>
-            </Tooltip>
+      <div className="p-8 pt-2 relative z-20 flex-1 flex flex-col justify-between">
+        <div>
+          <h3 className="text-3xl font-black text-white mb-2 leading-tight uppercase italic">{assetName}</h3>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 mb-8">
+            <MapPin className="w-3 h-3" /> Real World Asset
+          </p>
+
+          <div className="bg-black/50 rounded-3xl p-6 border border-white/5 mb-8 shadow-inner">
+            <div className="flex justify-between mb-3">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-1">Commitment</span>
+              <span className="text-blue-400 font-black text-sm">{progress.toFixed(1)}%</span>
+            </div>
+            <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden mb-5 shadow-inner">
+              <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="h-full bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.7)]" />
+            </div>
+            <div className="flex justify-between text-xl font-black text-white">
+              <p>{ethers.utils.formatEther(totalFunded || "0")} <span className="text-[10px] text-slate-600 uppercase font-medium tracking-tighter">ETH</span></p>
+              <p className="text-slate-500 italic">{ethers.utils.formatEther(fundingGoal || "0")} <span className="text-[10px] text-slate-600 uppercase font-bold tracking-tighter">Target</span></p>
+            </div>
           </div>
         </div>
+
+        <a href={`/market/${contractAddress}`} className="block w-full">
+          <button className="w-full bg-blue-600/10 text-blue-400 border border-blue-500/30 font-black py-5 rounded-[1.5rem] text-sm hover:bg-blue-600 hover:text-white transition-all shadow-xl uppercase tracking-widest italic group-hover:border-blue-500/60">
+            View Due Diligence
+          </button>
+        </a>
       </div>
-      <a href={`/market/${contractAddress}`} className="block w-full">
-        <button className="w-full bg-blue-600/10 text-blue-400 border border-blue-500/30 font-black py-7 rounded-[2rem] text-lg hover:bg-blue-600 hover:text-white transition-all shadow-xl uppercase tracking-widest italic group-hover:border-blue-500/60">
-          View Due Diligence
-        </button>
-      </a>
     </motion.div>
   );
 }
 
 // ==========================================
-// 6. VAULT POSITION CARD 
+// 6. VAULT POSITION CARD - VISUALLY UPGRADED
 // ==========================================
 function VaultPositionCard({ contractAddress, walletAddress, onFetch }) {
   const { contract } = useContract(contractAddress, POOL_ABI);
   
-  const { data: investment, isLoading, refetch: refetchInvestment } = useContractRead(
-    contract, 
-    "investorDeposits", 
-    [walletAddress]
-  );
-  
+  const { data: investment, isLoading, refetch: refetchInvestment } = useContractRead(contract, "investorDeposits", [walletAddress]);
   const { data: assetName } = useContractRead(contract, "assetName");
 
   useEffect(() => {
@@ -312,33 +319,33 @@ function VaultPositionCard({ contractAddress, walletAddress, onFetch }) {
     }
   }, [investment, contractAddress, onFetch]);
 
-  if (isLoading) return (
-    <div className="h-32 w-full bg-white/5 animate-pulse rounded-[2.5rem] border border-white/10 mb-6" />
-  );
-  
+  if (isLoading) return <div className="h-32 w-full bg-white/5 animate-pulse rounded-[2.5rem] border border-white/10 mb-6" />;
   if (!investment || investment.eq(0)) return null;
 
+  const imageUrl = ASSET_IMAGES[contractAddress] || ASSET_IMAGES["default"];
+
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#0a0b12]/90 backdrop-blur-2xl border border-white/10 p-8 lg:p-10 rounded-[2.5rem] shadow-2xl flex flex-col md:flex-row justify-between items-start md:items-center hover:border-blue-500/40 transition-all gap-6 mb-6">
-      <div className="flex items-center gap-6">
-        <div className="w-16 h-16 bg-gradient-to-br from-blue-900 to-[#02040a] rounded-2xl flex items-center justify-center border border-white/10 shadow-inner">
-          <FractalLogo className="w-10 h-10" />
+    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#0a0b12]/90 backdrop-blur-2xl border border-white/10 p-6 lg:p-8 rounded-[2rem] shadow-2xl flex flex-col md:flex-row justify-between items-start md:items-center hover:border-blue-500/40 transition-all gap-6 mb-6 group">
+      <div className="flex items-center gap-6 w-full md:w-auto">
+        
+        {/* 🌟 NEW: Property Thumbnail 🌟 */}
+        <div className="w-20 h-20 rounded-2xl border border-white/10 shadow-inner overflow-hidden relative shrink-0">
+          <img src={imageUrl} alt={assetName} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
         </div>
+
         <div>
-          <h4 className="text-2xl lg:text-3xl font-black text-white uppercase italic tracking-tight">{assetName || "Syncing Ledger..."}</h4>
-          <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Confirmed Position
+          <h4 className="text-xl lg:text-2xl font-black text-white uppercase italic tracking-tight">{assetName || "Syncing Ledger..."}</h4>
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
+            <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Confirmed Position
           </p>
         </div>
       </div>
       
-      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-4 w-full md:w-auto">
-        <div className="text-left sm:text-right w-full sm:w-auto bg-black/40 p-5 rounded-[1.5rem] border border-white/5">
-          <Tooltip content="Your total secured capital allocated to this specific institutional ledger.">
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1 cursor-help hover:text-blue-400 transition-colors inline-flex items-center gap-1">Syndicate Balance <Info className="w-3 h-3" /></p>
-          </Tooltip>
-          <p className="text-3xl font-black text-blue-400 block">
-            {ethers.utils.formatEther(investment)} <span className="text-sm text-slate-600 uppercase tracking-widest italic">ETH</span>
+      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-6 w-full md:w-auto">
+        <div className="text-left sm:text-right w-full sm:w-auto bg-black/40 px-6 py-4 rounded-2xl border border-white/5">
+          <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Syndicate Balance</p>
+          <p className="text-2xl font-black text-blue-400">
+            {ethers.utils.formatEther(investment)} <span className="text-xs text-slate-600 uppercase tracking-widest italic">ETH</span>
           </p>
         </div>
 
@@ -346,11 +353,8 @@ function VaultPositionCard({ contractAddress, walletAddress, onFetch }) {
           contractAddress={contractAddress} 
           contractAbi={POOL_ABI}
           action={async (contract) => await contract.call("liquidatePosition")} 
-          onSuccess={() => {
-            toast.success("Position Liquidated Successfully!");
-            refetchInvestment(); 
-          }}
-          className="!bg-red-500/10 !text-red-400 !border !border-red-500/30 hover:!bg-red-500 hover:!text-white !font-black !py-7 !px-8 !rounded-[1.5rem] transition-all uppercase tracking-widest text-xs w-full sm:w-auto"
+          onSuccess={() => { toast.success("Position Liquidated Successfully!"); refetchInvestment(); }}
+          className="!bg-red-500/10 !text-red-400 !border !border-red-500/30 hover:!bg-red-500 hover:!text-white !font-black !py-5 !px-8 !rounded-[1.2rem] transition-all uppercase tracking-widest text-xs w-full sm:w-auto"
         >
           Liquidate
         </Web3Button>
@@ -360,20 +364,13 @@ function VaultPositionCard({ contractAddress, walletAddress, onFetch }) {
 }
 
 // ==========================================
-// MANAGER DASHBOARD HELPERS (NEW!)
+// MANAGER DASHBOARD HELPERS
 // ==========================================
 function LedgerOption({ contractAddress }) {
   const { contract } = useContract(contractAddress, POOL_ABI);
   const { data: assetName } = useContractRead(contract, "assetName");
-
-  // This formats it nicely like: "Toronto Data Center (0x123...abcd)"
   const formattedAddress = `${contractAddress.slice(0, 6)}...${contractAddress.slice(-4)}`;
-  
-  return (
-    <option value={contractAddress}>
-      {assetName ? `${assetName} (${formattedAddress})` : `Syncing... (${formattedAddress})`}
-    </option>
-  );
+  return <option value={contractAddress}>{assetName ? `${assetName} (${formattedAddress})` : `Syncing... (${formattedAddress})`}</option>;
 }
 
 // ==========================================
@@ -386,7 +383,6 @@ function PlatformLayout() {
   const { contract: factoryContract } = useContract(FACTORY_ADDRESS, FACTORY_ABI);
   const { data: deployedPools, refetch: refetchPools } = useContractRead(factoryContract, "getAllPools");
 
-  // MANAGER DASHBOARD STATE
   const [selectedLedger, setSelectedLedger] = useState("");
   const [revenueAmount, setRevenueAmount] = useState("");
 
@@ -518,7 +514,6 @@ function PlatformLayout() {
             <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto mt-12 p-12 lg:p-16 bg-[#0a0b12]/90 backdrop-blur-3xl border border-white/10 rounded-[3rem] shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500"></div>
               
-              {/* --- SECTION 1: PROTOCOL FACTORY --- */}
               <div className="mb-12 text-center">
                 <h2 className="text-5xl lg:text-6xl font-black text-white uppercase italic mb-4 tracking-tighter">Protocol Factory</h2>
                 <p className="text-slate-400 text-lg lg:text-xl font-bold italic tracking-tight">Originate fractionalized asset ledgers via Core v1.0.4.</p>
@@ -554,7 +549,6 @@ function PlatformLayout() {
                 Synthesize Ledger Smart Contract
               </Web3Button>
 
-              {/* --- SECTION 2: MANAGER CONTROL PANEL --- */}
               <div className="mt-20 pt-16 border-t border-white/10">
                 <div className="mb-12 text-center">
                   <h3 className="text-4xl font-black text-white uppercase italic mb-4 tracking-tighter">Active Ledger Management</h3>
@@ -571,7 +565,6 @@ function PlatformLayout() {
                           className="w-full bg-black/80 border border-white/20 text-blue-400 rounded-2xl py-5 px-6 text-lg outline-none focus:border-blue-500 transition-all font-black italic appearance-none cursor-pointer"
                        >
                          <option value="" className="text-slate-600">Select an active ledger from the blockchain...</option>
-                         {/* This is where your new LedgerOption component works its magic! */}
                          {deployedPools?.map(addr => <LedgerOption key={addr} contractAddress={addr} />)}
                        </select>
                        <ChevronDown className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none w-6 h-6" />
@@ -580,7 +573,6 @@ function PlatformLayout() {
 
                   {selectedLedger && (
                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                      
                       <div className="bg-red-500/5 border border-red-500/20 p-8 rounded-3xl flex flex-col justify-between gap-6">
                         <div>
                           <h4 className="text-red-400 font-black uppercase tracking-widest mb-2 flex items-center gap-2"><ShieldAlert className="w-5 h-5" /> Emergency Protocol</h4>
