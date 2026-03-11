@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ThirdwebProvider, ConnectWallet, Web3Button, useContract, useContractRead } from "@thirdweb-dev/react";
 import { ethers } from "ethers";
 import { motion } from "framer-motion";
@@ -20,13 +20,10 @@ const POOL_ABI = [
 // ==========================================
 // 🌟 THE FRONTEND IMAGE DICTIONARY 🌟
 // ==========================================
-// Paste your actual Sepolia contract addresses on the left, and any image URL on the right!
 const ASSET_IMAGES = {
-  "0xYourFirstContractAddressHere": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=2000", // Dark Data Center
-  "0xYourSecondContractAddressHere": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=2000", // Miami Condo
-  
-  // The fallback image for any brand new properties you create
-  "default": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2000" // Generic Luxury Skyscraper
+  "0xYourFirstContractAddressHere": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=2000", 
+  "0xYourSecondContractAddressHere": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=2000", 
+  "default": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2000" 
 };
 
 // ==========================================
@@ -40,10 +37,26 @@ function ProspectusContent({ contractAddress }) {
   const { data: isClosed, refetch: refetchStatus } = useContractRead(contract, "isClosed");
 
   const [investAmount, setInvestAmount] = useState("");
+  const [ethPrice, setEthPrice] = useState(0);
 
-  const progress = Math.min((parseFloat(ethers.utils.formatEther(totalFunded || "0")) / parseFloat(ethers.utils.formatEther(fundingGoal || "1"))) * 100, 100) || 0;
+  // 🌟 NEW: Fetching the Live ETH Price from Binance 🌟
+  useEffect(() => {
+    fetch("https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT")
+      .then(res => res.json())
+      .then(data => setEthPrice(parseFloat(data.price)))
+      .catch(console.error);
+  }, []);
 
-  // Grab the specific image for this contract, or use the default
+  const ethFunded = parseFloat(ethers.utils.formatEther(totalFunded || "0"));
+  const ethGoal = parseFloat(ethers.utils.formatEther(fundingGoal || "0"));
+  
+  // Prevent division by zero before load
+  const progress = Math.min((ethFunded / (ethGoal > 0 ? ethGoal : 1)) * 100, 100) || 0;
+
+  // 🌟 NEW: Live USD Conversions 🌟
+  const usdFunded = ethPrice > 0 ? (ethFunded * ethPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : "...";
+  const usdGoal = ethPrice > 0 ? (ethGoal * ethPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : "...";
+
   const imageUrl = ASSET_IMAGES[contractAddress] || ASSET_IMAGES["default"];
 
   if (nameLoading) return <div className="min-h-screen bg-[#02040a] flex items-center justify-center"><div className="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" /></div>;
@@ -83,7 +96,7 @@ function ProspectusContent({ contractAddress }) {
           {/* Left Column: Details & Due Diligence */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="lg:col-span-2 space-y-12">
             
-            {/* 🌟 NEW: Dynamic Property Visual 🌟 */}
+            {/* Dynamic Property Visual */}
             <div className="w-full h-[400px] rounded-[3rem] border border-white/10 relative overflow-hidden flex items-center justify-center shadow-2xl group bg-[#0a0b12]">
               <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-all duration-500 z-10"></div>
               <img 
@@ -116,16 +129,18 @@ function ProspectusContent({ contractAddress }) {
           {/* Right Column: Financial Terminal */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="space-y-8">
             
-            {/* Progress & Target Box */}
+            {/* 🌟 UPDATED: Progress & Target Box with Live USD 🌟 */}
             <div className="bg-blue-600/5 border border-blue-500/20 p-8 rounded-[2.5rem] shadow-2xl">
               <div className="flex justify-between items-end mb-6">
                 <div>
                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Total Committed</p>
-                  <p className="text-4xl font-black text-white">{ethers.utils.formatEther(totalFunded || "0")} <span className="text-base text-slate-500 italic">ETH</span></p>
+                  <p className="text-4xl font-black text-white">{ethFunded.toFixed(4)} <span className="text-base text-slate-500 italic">ETH</span></p>
+                  <p className="text-emerald-500/80 text-sm font-bold mt-1 tracking-widest">≈ {usdFunded}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] mb-2">Funding Cap</p>
-                  <p className="text-xl font-black text-blue-400">{ethers.utils.formatEther(fundingGoal || "0")} <span className="text-xs text-blue-500/50 italic">ETH</span></p>
+                  <p className="text-xl font-black text-blue-400">{ethGoal.toFixed(4)} <span className="text-xs text-blue-500/50 italic">ETH</span></p>
+                  <p className="text-blue-400/60 text-[10px] font-bold mt-1 tracking-widest">≈ {usdGoal}</p>
                 </div>
               </div>
 
