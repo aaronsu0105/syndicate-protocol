@@ -1,20 +1,14 @@
 "use client";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { 
-  ThirdwebProvider, 
-  ConnectWallet, 
-  Web3Button, 
-  useAddress, 
-  useContract, 
-  useContractRead 
+  ThirdwebProvider, ConnectWallet, Web3Button, useAddress, useContract, useContractRead 
 } from "@thirdweb-dev/react";
 import { ethers } from "ethers";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, useTime } from "framer-motion";
 import { 
-  Building2, Activity, Boxes, Search, 
-  Network, Cpu, Lock, ExternalLink, Sparkles, BarChart3, LineChart, ArrowUpRight, CheckCircle2, AlertTriangle,
-  Globe, Info, Filter, ChevronDown, ShieldAlert, Banknote, MapPin
+  Building2, Activity, Boxes, Search, Network, Cpu, Lock, ExternalLink, Sparkles, BarChart3, LineChart, 
+  ArrowUpRight, CheckCircle2, Globe, Info, Filter, ChevronDown, ShieldAlert, Banknote, MapPin, Droplets, History
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -23,9 +17,6 @@ const queryClient = new QueryClient();
 const FACTORY_ADDRESS = process.env.NEXT_PUBLIC_FACTORY_ADDRESS; 
 const MANAGER_ADDRESS = process.env.NEXT_PUBLIC_MANAGER_ADDRESS;
 
-// ==========================================
-// 🌟 THE FRONTEND IMAGE DICTIONARY 🌟
-// ==========================================
 const ASSET_IMAGES = {
   "0xYourFirstContractAddressHere": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&q=80&w=2000", 
   "0xYourSecondContractAddressHere": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=2000", 
@@ -33,7 +24,7 @@ const ASSET_IMAGES = {
 };
 
 // ==========================================
-// 0. BRANDING & UI COMPONENTS
+// BRANDING & UI COMPONENTS
 // ==========================================
 function FractalLogo({ className }) {
   return (
@@ -62,28 +53,20 @@ function Tooltip({ children, content }) {
   );
 }
 
-// 🌟 UPDATED: Live Price in the Ticker 🌟
 function NetworkTicker({ ethPrice }) {
   const displayPrice = ethPrice > 0 ? ethPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : "Syncing...";
-  
   return (
     <div className="fixed top-0 left-0 w-full bg-[#02040a] border-b border-blue-500/20 overflow-hidden z-[110] h-8 flex items-center">
-      <motion.div 
-        animate={{ x: ["0%", "-50%"] }}
-        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-        className="flex gap-16 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 w-max"
-      >
+      <motion.div animate={{ x: ["0%", "-50%"] }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }} className="flex gap-16 whitespace-nowrap text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 w-max">
         {[...Array(2)].map((_, i) => (
           <React.Fragment key={i}>
             <span className="flex items-center gap-2"><Globe className="w-3 h-3" /> NETWORK: SEPOLIA TESTNET</span>
             <span className="text-slate-600">|</span>
-            <span className="flex items-center gap-2"><Activity className="w-3 h-3 text-emerald-500" /> RPC: ONLINE (42ms)</span>
+            <span className="flex items-center gap-2"><Activity className="w-3 h-3 text-emerald-500" /> RPC: ONLINE</span>
             <span className="text-slate-600">|</span>
             <span>ETH/USD: {displayPrice} <span className="text-emerald-500">LIVE</span></span>
             <span className="text-slate-600">|</span>
             <span>GLOBAL TVL: 14,291.50 ETH</span>
-            <span className="text-slate-600">|</span>
-            <span className="text-amber-500">GAS: 12 GWEI</span>
             <span className="text-slate-600">|</span>
           </React.Fragment>
         ))}
@@ -93,7 +76,65 @@ function NetworkTicker({ ethPrice }) {
 }
 
 // ==========================================
-// 1. SMART CONTRACT ABIs
+// 🌟 NEW: LIVE ACTIVITY FEED SIMULATOR 🌟
+// ==========================================
+function LiveActivityFeed() {
+  const [activities, setActivities] = useState([
+    { id: 1, action: "Committed 0.5 ETH", asset: "London Logistics Terminal", time: "Just now", hash: "0x7a...3f9" },
+    { id: 2, action: "Liquidated Position", asset: "Miami Condo SPV", time: "2 mins ago", hash: "0x2b...1a4" },
+    { id: 3, action: "Committed 1.2 ETH", asset: "Toronto Data Center", time: "5 mins ago", hash: "0x9c...8d2" }
+  ]);
+
+  useEffect(() => {
+    const actions = ["Committed 0.25 ETH", "Committed 1.5 ETH", "Committed 0.8 ETH", "Liquidated Position", "Claimed Yield"];
+    const assets = ["London Logistics Terminal", "Miami Condo SPV", "Toronto Data Center", "PINES 39", "Singapore Hub"];
+    
+    const interval = setInterval(() => {
+      const newActivity = {
+        id: Date.now(),
+        action: actions[Math.floor(Math.random() * actions.length)],
+        asset: assets[Math.floor(Math.random() * assets.length)],
+        time: "Just now",
+        hash: `0x${Math.floor(Math.random()*16777215).toString(16)}...${Math.floor(Math.random()*16777215).toString(16).slice(-3)}`
+      };
+      
+      setActivities(prev => {
+        const updated = [newActivity, ...prev].map(item => {
+          if (item.time === "Just now" && item.id !== newActivity.id) return { ...item, time: "1 min ago" };
+          return item;
+        });
+        return updated.slice(0, 4); // Keep only top 4
+      });
+    }, 12000); // New transaction every 12 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="w-full max-w-sm bg-[#0a0b12]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl absolute right-12 top-[60vh] hidden xl:block z-50">
+      <h3 className="text-slate-400 text-xs font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+        <History className="w-4 h-4 text-blue-500" /> Network Activity
+      </h3>
+      <div className="space-y-4">
+        <AnimatePresence>
+          {activities.map((item) => (
+            <motion.div key={item.id} initial={{ opacity: 0, y: -20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-black/40 border border-white/5 p-4 rounded-2xl">
+              <div className="flex justify-between items-start mb-1">
+                <span className={`text-xs font-bold ${item.action.includes('Liquidated') ? 'text-red-400' : 'text-emerald-400'}`}>{item.action}</span>
+                <span className="text-[9px] text-slate-500 uppercase tracking-wider">{item.time}</span>
+              </div>
+              <p className="text-white text-sm font-black italic tracking-tight truncate">{item.asset}</p>
+              <p className="text-slate-600 text-[10px] font-mono mt-2">TX: {item.hash}</p>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// SMART CONTRACT ABIs
 // ==========================================
 const FACTORY_ABI = [
   { "inputs": [{ "type": "string", "name": "_assetName" }, { "type": "uint256", "name": "_fundingGoal" }], "name": "createPool", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
@@ -113,7 +154,7 @@ const POOL_ABI = [
 ];
 
 // ==========================================
-// 2. VOLUMETRIC ASSET LIBRARY
+// VOLUMETRIC ASSET LIBRARY
 // ==========================================
 const CRYPTO_ASSETS = [
   { id: "BTC", bg: "from-[#fcd535] to-[#f7931a]", inner: "from-[#f7931a] to-[#d67b12]", border: "border-yellow-500", rim: "#92400e", viewBox: "0 0 32 32", svg: <g transform="rotate(14 16 16)"><path d="M21.536,15.706c1.196-0.849,1.96-2.128,1.96-3.666c0-2.883-2.361-5.234-5.275-5.234h-2.096V3h-2.228v3.805h-1.63V3H10.04v3.805H7v2.228h1.826c0.669,0,1.211,0.542,1.211,1.211v11.455c0,0.669-0.542,1.211-1.211,1.211H7v2.228h3.04V29h2.228v-3.805h1.63V29h2.228v-3.805h2.893c3.087,0,5.656-2.551,5.656-5.688C24.675,17.842,23.364,16.257,21.536,15.706z M14.364,9.034h3.606c1.657,0,3.006,1.348,3.006,3.006c0,1.658-1.349,3.006-3.006,3.006h-3.606V9.034z M18.423,22.972h-4.059v-5.918h4.059c1.916,0,3.475,1.558,3.475,3.475S20.339,22.972,18.423,22.972z" fill="white"/></g> },
@@ -169,13 +210,11 @@ function SwarmNode({ coin, index, total, smoothY, time }) {
     const stackTargetScale = 2.4; 
     return orbitScale * (1 - p) + stackTargetScale * p;
   });
-  
   const zIndex = useTransform(() => {
     const p = Math.min(1, Math.max(0, smoothY.get() / 800));
     const currentAngle = baseAngle + time.get() / 12000;
     return p > 0.6 ? 10 - index : (Math.sin(currentAngle) > 0 ? 50 : 10);
   });
-
   const filter = useTransform(() => {
     const p = Math.min(1, Math.max(0, smoothY.get() / 800));
     return `blur(${p * 5}px) brightness(${1 - p * 0.3})`; 
@@ -209,12 +248,11 @@ function UnifiedCoinSwarm() {
 }
 
 // ==========================================
-// 4. ANIMATED SCROLL GRADIENT BACKGROUND
+// ANIMATED SCROLL GRADIENT BACKGROUND
 // ==========================================
 function InteractiveScrollBackground() {
   const { scrollYProgress } = useScroll();
   const glowRef = useRef(null);
-  
   const bg1Opacity = useTransform(scrollYProgress, [0, 0.4, 0.6], [1, 0, 0]);
   const bg2Opacity = useTransform(scrollYProgress, [0.3, 0.5, 0.7], [0, 1, 0]);
   const bg3Opacity = useTransform(scrollYProgress, [0.6, 0.8, 1], [0, 0, 1]);
@@ -247,7 +285,7 @@ function InteractiveScrollBackground() {
 }
 
 // ==========================================
-// 5. PROJECT CARDS (MARKETPLACE) - 🌟 WITH LIVE USD MATH 🌟
+// PROJECT CARDS
 // ==========================================
 function ProjectCard({ contractAddress, index, ethPrice }) {
   const { contract } = useContract(contractAddress, POOL_ABI);
@@ -262,14 +300,11 @@ function ProjectCard({ contractAddress, index, ethPrice }) {
   const goalValue = parseFloat(ethers.utils.formatEther(fundingGoal || "0"));
   const progress = Math.min((ethValue / goalValue) * 100, 100) || 0;
   
-  // Multiply ETH by the live price from Binance
   const usdValue = ethPrice > 0 ? (ethValue * ethPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : "...";
-  
   const imageUrl = ASSET_IMAGES[contractAddress] || ASSET_IMAGES["default"];
 
   return (
     <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className="group relative bg-[#0a0b12]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] shadow-2xl flex flex-col hover:border-blue-500/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.15)] transition-all duration-500 overflow-hidden">
-      
       <div className="relative w-full h-56 overflow-hidden">
         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
         <img src={imageUrl} alt={assetName} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -296,7 +331,6 @@ function ProjectCard({ contractAddress, index, ethPrice }) {
             <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden mb-5 shadow-inner">
               <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="h-full bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.7)]" />
             </div>
-            
             <div className="flex justify-between items-end">
               <div>
                 <p className="text-xl font-black text-white">{ethValue.toFixed(4)} <span className="text-[10px] text-slate-600 uppercase font-medium tracking-tighter">ETH</span></p>
@@ -320,11 +354,10 @@ function ProjectCard({ contractAddress, index, ethPrice }) {
 }
 
 // ==========================================
-// 6. VAULT POSITION CARD - 🌟 WITH LIVE USD MATH 🌟
+// VAULT POSITION CARD
 // ==========================================
 function VaultPositionCard({ contractAddress, walletAddress, onFetch, ethPrice }) {
   const { contract } = useContract(contractAddress, POOL_ABI);
-  
   const { data: investment, isLoading, refetch: refetchInvestment } = useContractRead(contract, "investorDeposits", [walletAddress]);
   const { data: assetName } = useContractRead(contract, "assetName");
 
@@ -339,7 +372,6 @@ function VaultPositionCard({ contractAddress, walletAddress, onFetch, ethPrice }
 
   const ethValue = parseFloat(ethers.utils.formatEther(investment));
   const usdValue = ethPrice > 0 ? (ethValue * ethPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : "...";
-
   const imageUrl = ASSET_IMAGES[contractAddress] || ASSET_IMAGES["default"];
 
   return (
@@ -379,9 +411,6 @@ function VaultPositionCard({ contractAddress, walletAddress, onFetch, ethPrice }
   );
 }
 
-// ==========================================
-// MANAGER DASHBOARD HELPERS
-// ==========================================
 function LedgerOption({ contractAddress }) {
   const { contract } = useContract(contractAddress, POOL_ABI);
   const { data: assetName } = useContractRead(contract, "assetName");
@@ -390,7 +419,7 @@ function LedgerOption({ contractAddress }) {
 }
 
 // ==========================================
-// 7. MAIN PLATFORM WRAPPER
+// MAIN PLATFORM WRAPPER
 // ==========================================
 function PlatformLayout() {
   const [activeTab, setActiveTab] = useState("explore");
@@ -401,11 +430,9 @@ function PlatformLayout() {
 
   const [selectedLedger, setSelectedLedger] = useState("");
   const [revenueAmount, setRevenueAmount] = useState("");
-
   const [portfolioInvestments, setPortfolioInvestments] = useState({});
   const [ethPrice, setEthPrice] = useState(0);
 
-  // 🌟 NEW: Fetching the Live ETH Price from Binance 🌟
   useEffect(() => {
     fetch("https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT")
       .then(res => res.json())
@@ -434,12 +461,13 @@ function PlatformLayout() {
 
   return (
     <div className="min-h-screen font-sans relative selection:bg-blue-500/30 text-slate-200 pt-8">
-      {/* Passing the live price up to the Network Ticker! */}
       <NetworkTicker ethPrice={ethPrice} />
-      
       <InteractiveScrollBackground />
       <Toaster position="bottom-right" />
       {activeTab === "explore" && <UnifiedCoinSwarm />}
+
+      {/* 🌟 NEW: Activity Feed renders when in Explore tab 🌟 */}
+      {activeTab === "explore" && <LiveActivityFeed />}
 
       <nav className="absolute top-8 left-0 right-0 z-[100] border-b border-white/5 h-32 flex items-center w-full bg-transparent">
         <div className="w-full px-12 lg:px-24 flex justify-between items-center overflow-visible">
@@ -447,13 +475,19 @@ function PlatformLayout() {
             <div className="w-16 h-16 bg-gradient-to-br from-blue-900 to-[#02040a] rounded-2xl flex items-center justify-center shadow-2xl border border-white/10"><FractalLogo className="w-12 h-12" /></div>
             <span className="text-3xl font-black text-white tracking-tighter uppercase italic pr-12 overflow-visible">Syndicate <span className="font-light text-slate-500 not-italic uppercase tracking-widest">Protocol</span></span>
           </div>
-          <div className="hidden sm:flex items-center gap-16 lg:gap-20 font-black uppercase tracking-[0.25em] text-base relative z-[100]">
+          <div className="hidden sm:flex items-center gap-8 lg:gap-12 font-black uppercase tracking-[0.25em] text-sm relative z-[100]">
             <button onClick={() => {setActiveTab("explore"); window.scrollTo({top: 0, behavior: 'smooth'})}} className={`${activeTab === 'explore' ? 'text-blue-400 underline underline-offset-8 decoration-2' : 'text-slate-400 hover:text-white transition-colors'}`}>Markets</button>
             <button onClick={() => setActiveTab("portfolio")} className={`${activeTab === 'portfolio' ? 'text-blue-400 underline underline-offset-8 decoration-2' : 'text-slate-400 hover:text-white transition-colors'}`}>Vault</button>
             {connectedWallet?.toLowerCase() === MANAGER_ADDRESS?.toLowerCase() && (
-              <button onClick={() => setActiveTab("admin")} className="text-amber-500 flex items-center gap-3 bg-amber-500/10 px-8 py-4 rounded-xl border border-amber-500/20">Terminal <ExternalLink className="w-5 h-5" /></button>
+              <button onClick={() => setActiveTab("admin")} className="text-amber-500 flex items-center gap-2 bg-amber-500/10 px-6 py-3 rounded-xl border border-amber-500/20">Terminal <ExternalLink className="w-4 h-4" /></button>
             )}
-            <ConnectWallet theme="dark" className="!bg-blue-600 !text-white !font-black !tracking-[0.15em] !uppercase !rounded-2xl !px-12 !py-4 hover:!bg-blue-500 transition-all shadow-xl shadow-blue-600/20" />
+            
+            {/* 🌟 NEW: The Testnet Faucet UX Bridge 🌟 */}
+            <a href="https://sepoliafaucet.com/" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-blue-400 bg-blue-500/10 border border-blue-500/30 px-6 py-3 rounded-xl hover:bg-blue-500 hover:text-white transition-all">
+              <Droplets className="w-4 h-4" /> Get Testnet ETH
+            </a>
+
+            <ConnectWallet theme="dark" className="!bg-blue-600 !text-white !font-black !tracking-[0.15em] !uppercase !rounded-2xl !px-8 !py-3 hover:!bg-blue-500 transition-all shadow-xl shadow-blue-600/20" />
           </div>
         </div>
       </nav>
@@ -528,7 +562,6 @@ function PlatformLayout() {
           {activeTab === "admin" && (
             <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} className="max-w-5xl mx-auto mt-12 p-12 lg:p-16 bg-[#0a0b12]/90 backdrop-blur-3xl border border-white/10 rounded-[3rem] shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-600 via-purple-500 to-pink-500"></div>
-              
               <div className="mb-12 text-center">
                 <h2 className="text-5xl lg:text-6xl font-black text-white uppercase italic mb-4 tracking-tighter">Protocol Factory</h2>
                 <p className="text-slate-400 text-lg lg:text-xl font-bold italic tracking-tight">Originate fractionalized asset ledgers via Core v1.0.4.</p>
@@ -636,7 +669,6 @@ function PlatformLayout() {
                   )}
                 </div>
               </div>
-
             </motion.div>
           )}
           
@@ -644,7 +676,6 @@ function PlatformLayout() {
             <motion.div key="portfolio" className="max-w-6xl mx-auto mt-12 px-8 text-center">
                <h2 className="text-6xl lg:text-7xl font-black text-white mb-12 italic uppercase tracking-tighter overflow-visible text-center mx-auto">Asset Vault</h2>
                
-               {/* 🌟 UPDATED: Live USD totals for Portfolio 🌟 */}
                <div className="grid md:grid-cols-3 gap-8 mb-16 text-left">
                   <div className="bg-[#0a0b12]/90 backdrop-blur-xl border border-white/5 p-8 lg:p-10 rounded-[2.5rem] shadow-2xl hover:border-white/10 transition-all flex flex-col items-center sm:items-start">
                     <Tooltip content="The aggregated value of all your active smart contract positions.">
@@ -684,7 +715,7 @@ function PlatformLayout() {
         </AnimatePresence>
       </main>
 
-      <footer className="border-t border-white/5 py-12 text-center relative z-20 italic uppercase font-black tracking-[0.6em] text-xs"><p className="text-slate-700">Syndicate Protocol v1.0.4 &copy; 2026 | Institutional DeFi Core</p></footer>
+      <footer className="border-t border-white/5 py-12 text-center relative z-20 italic uppercase font-black tracking-[0.6em] text-xs"><p className="text-slate-700">Syndicate Protocol v1.0 &copy; 2026 | Institutional DeFi Core</p></footer>
       
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes blob { 0% { transform: translate(0,0) scale(1); } 33% { transform: translate(30px,-50px) scale(1.1); } 66% { transform: translate(-20px,20px) scale(0.9); } 100% { transform: translate(0,0) scale(1); } } 
