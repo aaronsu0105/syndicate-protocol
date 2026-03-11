@@ -62,7 +62,10 @@ function Tooltip({ children, content }) {
   );
 }
 
-function NetworkTicker() {
+// 🌟 UPDATED: Live Price in the Ticker 🌟
+function NetworkTicker({ ethPrice }) {
+  const displayPrice = ethPrice > 0 ? ethPrice.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : "Syncing...";
+  
   return (
     <div className="fixed top-0 left-0 w-full bg-[#02040a] border-b border-blue-500/20 overflow-hidden z-[110] h-8 flex items-center">
       <motion.div 
@@ -76,7 +79,7 @@ function NetworkTicker() {
             <span className="text-slate-600">|</span>
             <span className="flex items-center gap-2"><Activity className="w-3 h-3 text-emerald-500" /> RPC: ONLINE (42ms)</span>
             <span className="text-slate-600">|</span>
-            <span>ETH/USD: $2,015.42 <span className="text-emerald-500">+1.24%</span></span>
+            <span>ETH/USD: {displayPrice} <span className="text-emerald-500">LIVE</span></span>
             <span className="text-slate-600">|</span>
             <span>GLOBAL TVL: 14,291.50 ETH</span>
             <span className="text-slate-600">|</span>
@@ -110,13 +113,12 @@ const POOL_ABI = [
 ];
 
 // ==========================================
-// 2. VOLUMETRIC ASSET LIBRARY (Kept for hero section)
+// 2. VOLUMETRIC ASSET LIBRARY
 // ==========================================
 const CRYPTO_ASSETS = [
   { id: "BTC", bg: "from-[#fcd535] to-[#f7931a]", inner: "from-[#f7931a] to-[#d67b12]", border: "border-yellow-500", rim: "#92400e", viewBox: "0 0 32 32", svg: <g transform="rotate(14 16 16)"><path d="M21.536,15.706c1.196-0.849,1.96-2.128,1.96-3.666c0-2.883-2.361-5.234-5.275-5.234h-2.096V3h-2.228v3.805h-1.63V3H10.04v3.805H7v2.228h1.826c0.669,0,1.211,0.542,1.211,1.211v11.455c0,0.669-0.542,1.211-1.211,1.211H7v2.228h3.04V29h2.228v-3.805h1.63V29h2.228v-3.805h2.893c3.087,0,5.656-2.551,5.656-5.688C24.675,17.842,23.364,16.257,21.536,15.706z M14.364,9.034h3.606c1.657,0,3.006,1.348,3.006,3.006c0,1.658-1.349,3.006-3.006,3.006h-3.606V9.034z M18.423,22.972h-4.059v-5.918h4.059c1.916,0,3.475,1.558,3.475,3.475S20.339,22.972,18.423,22.972z" fill="white"/></g> },
   { id: "ETH", bg: "from-[#a855f7] to-[#6366f1]", inner: "from-[#8b5cf6] to-[#4f46e5]", border: "border-purple-400", rim: "#3730a3", viewBox: "0 0 24 24", svg: <path d="M11.963 17.977L4.582 13.617L11.963 24L19.344 13.617L11.963 17.977zM12.075 0L4.692 12.223L12.075 16.577L19.458 12.223L12.075 0z" fill="white"/> },
-  { id: "SOL", bg: "from-[#14f195] to-[#9945ff]", inner: "from-[#10b981] to-[#7c3aed]", border: "border-emerald-400", rim: "#065f46", viewBox: "0 0 100 100", svg: <g fill="white"><polygon points="28,24 92,24 72,40 8,40" /><polygon points="8,46 72,46 92,62 28,62" /><polygon points="28,68 92,68 72,84 8,84" /></g> },
-  { id: "USDC", bg: "from-[#2775ca] to-[#1a5ba8]", inner: "from-[#2775ca] to-[#1a5ba8]", border: "border-blue-400", rim: "#1e3a8a", viewBox: "0 0 100 100", svg: <g fill="none" stroke="white" strokeLinecap="round"><path d="M 23 20 A 35 35 0 0 0 23 80" strokeWidth="10" /><path d="M 77 20 A 35 35 0 0 1 77 80" strokeWidth="10" /><path d="M 62 38 C 62 24, 38 24, 38 38 C 36 54, 62 50, 62 68 C 62 82, 38 82, 38 70" strokeWidth="9" /><path d="M 50 12 L 50 88" strokeWidth="9" /></g> }
+  { id: "SOL", bg: "from-[#14f195] to-[#9945ff]", inner: "from-[#10b981] to-[#7c3aed]", border: "border-emerald-400", rim: "#065f46", viewBox: "0 0 100 100", svg: <g fill="white"><polygon points="28,24 92,24 72,40 8,40" /><polygon points="8,46 72,46 92,62 28,62" /><polygon points="28,68 92,68 72,84 8,84" /></g> }
 ];
 
 function VolumetricChip({ coin, sizeClass }) {
@@ -243,9 +245,9 @@ function InteractiveScrollBackground() {
 }
 
 // ==========================================
-// 5. PROJECT CARDS (MARKETPLACE) - VISUALLY UPGRADED
+// 5. PROJECT CARDS (MARKETPLACE) - 🌟 WITH LIVE USD MATH 🌟
 // ==========================================
-function ProjectCard({ contractAddress, index }) {
+function ProjectCard({ contractAddress, index, ethPrice }) {
   const { contract } = useContract(contractAddress, POOL_ABI);
   const { data: assetName, isLoading: nameLoading } = useContractRead(contract, "assetName");
   const { data: fundingGoal } = useContractRead(contract, "fundingGoal");
@@ -253,14 +255,19 @@ function ProjectCard({ contractAddress, index }) {
   const { data: isClosed } = useContractRead(contract, "isClosed");
 
   if (nameLoading) return <div className="h-[520px] bg-white/5 animate-pulse rounded-[3rem] border border-white/10" />;
-  const progress = Math.min((parseFloat(ethers.utils.formatEther(totalFunded || "0")) / parseFloat(ethers.utils.formatEther(fundingGoal || "1"))) * 100, 100) || 0;
+  
+  const ethValue = parseFloat(ethers.utils.formatEther(totalFunded || "0"));
+  const goalValue = parseFloat(ethers.utils.formatEther(fundingGoal || "0"));
+  const progress = Math.min((ethValue / goalValue) * 100, 100) || 0;
+  
+  // Multiply ETH by the live price from Binance
+  const usdValue = ethPrice > 0 ? (ethValue * ethPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : "...";
   
   const imageUrl = ASSET_IMAGES[contractAddress] || ASSET_IMAGES["default"];
 
   return (
     <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }} className="group relative bg-[#0a0b12]/80 backdrop-blur-3xl border border-white/10 rounded-[3rem] shadow-2xl flex flex-col hover:border-blue-500/50 hover:shadow-[0_0_40px_rgba(59,130,246,0.15)] transition-all duration-500 overflow-hidden">
       
-      {/* 🌟 NEW: The Gorgeous Image Banner 🌟 */}
       <div className="relative w-full h-56 overflow-hidden">
         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors z-10"></div>
         <img src={imageUrl} alt={assetName} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
@@ -287,9 +294,15 @@ function ProjectCard({ contractAddress, index }) {
             <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden mb-5 shadow-inner">
               <motion.div initial={{ width: 0 }} animate={{ width: `${progress}%` }} className="h-full bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.7)]" />
             </div>
-            <div className="flex justify-between text-xl font-black text-white">
-              <p>{ethers.utils.formatEther(totalFunded || "0")} <span className="text-[10px] text-slate-600 uppercase font-medium tracking-tighter">ETH</span></p>
-              <p className="text-slate-500 italic">{ethers.utils.formatEther(fundingGoal || "0")} <span className="text-[10px] text-slate-600 uppercase font-bold tracking-tighter">Target</span></p>
+            
+            <div className="flex justify-between items-end">
+              <div>
+                <p className="text-xl font-black text-white">{ethValue.toFixed(4)} <span className="text-[10px] text-slate-600 uppercase font-medium tracking-tighter">ETH</span></p>
+                <p className="text-emerald-500/80 text-[10px] font-bold mt-1 tracking-widest">≈ {usdValue}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-black text-slate-400 italic">{goalValue.toFixed(4)} <span className="text-[10px] text-slate-600 uppercase font-bold tracking-tighter">Target</span></p>
+              </div>
             </div>
           </div>
         </div>
@@ -305,9 +318,9 @@ function ProjectCard({ contractAddress, index }) {
 }
 
 // ==========================================
-// 6. VAULT POSITION CARD - VISUALLY UPGRADED
+// 6. VAULT POSITION CARD - 🌟 WITH LIVE USD MATH 🌟
 // ==========================================
-function VaultPositionCard({ contractAddress, walletAddress, onFetch }) {
+function VaultPositionCard({ contractAddress, walletAddress, onFetch, ethPrice }) {
   const { contract } = useContract(contractAddress, POOL_ABI);
   
   const { data: investment, isLoading, refetch: refetchInvestment } = useContractRead(contract, "investorDeposits", [walletAddress]);
@@ -322,17 +335,17 @@ function VaultPositionCard({ contractAddress, walletAddress, onFetch }) {
   if (isLoading) return <div className="h-32 w-full bg-white/5 animate-pulse rounded-[2.5rem] border border-white/10 mb-6" />;
   if (!investment || investment.eq(0)) return null;
 
+  const ethValue = parseFloat(ethers.utils.formatEther(investment));
+  const usdValue = ethPrice > 0 ? (ethValue * ethPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : "...";
+
   const imageUrl = ASSET_IMAGES[contractAddress] || ASSET_IMAGES["default"];
 
   return (
     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-[#0a0b12]/90 backdrop-blur-2xl border border-white/10 p-6 lg:p-8 rounded-[2rem] shadow-2xl flex flex-col md:flex-row justify-between items-start md:items-center hover:border-blue-500/40 transition-all gap-6 mb-6 group">
       <div className="flex items-center gap-6 w-full md:w-auto">
-        
-        {/* 🌟 NEW: Property Thumbnail 🌟 */}
         <div className="w-20 h-20 rounded-2xl border border-white/10 shadow-inner overflow-hidden relative shrink-0">
           <img src={imageUrl} alt={assetName} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
         </div>
-
         <div>
           <h4 className="text-xl lg:text-2xl font-black text-white uppercase italic tracking-tight">{assetName || "Syncing Ledger..."}</h4>
           <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.2em] mt-1 flex items-center gap-2">
@@ -345,8 +358,9 @@ function VaultPositionCard({ contractAddress, walletAddress, onFetch }) {
         <div className="text-left sm:text-right w-full sm:w-auto bg-black/40 px-6 py-4 rounded-2xl border border-white/5">
           <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Syndicate Balance</p>
           <p className="text-2xl font-black text-blue-400">
-            {ethers.utils.formatEther(investment)} <span className="text-xs text-slate-600 uppercase tracking-widest italic">ETH</span>
+            {ethValue.toFixed(4)} <span className="text-xs text-slate-600 uppercase tracking-widest italic">ETH</span>
           </p>
+          <p className="text-emerald-500/80 text-[10px] font-bold mt-1 tracking-widest">≈ {usdValue}</p>
         </div>
 
         <Web3Button 
@@ -387,6 +401,16 @@ function PlatformLayout() {
   const [revenueAmount, setRevenueAmount] = useState("");
 
   const [portfolioInvestments, setPortfolioInvestments] = useState({});
+  const [ethPrice, setEthPrice] = useState(0);
+
+  // 🌟 NEW: Fetching the Live ETH Price from Binance 🌟
+  useEffect(() => {
+    fetch("https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT")
+      .then(res => res.json())
+      .then(data => setEthPrice(parseFloat(data.price)))
+      .catch(console.error);
+  }, []);
+
   const handleInvestmentFetch = useCallback((pool, amount) => {
     setPortfolioInvestments(prev => {
       if (prev[pool]?.toString() === amount.toString()) return prev;
@@ -403,9 +427,14 @@ function PlatformLayout() {
     }
   });
 
+  const portfolioEthValue = parseFloat(ethers.utils.formatEther(totalCommittedETH));
+  const portfolioUsdValue = ethPrice > 0 ? (portfolioEthValue * ethPrice).toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : "...";
+
   return (
     <div className="min-h-screen font-sans relative selection:bg-blue-500/30 text-slate-200 pt-8">
-      <NetworkTicker />
+      {/* Passing the live price up to the Network Ticker! */}
+      <NetworkTicker ethPrice={ethPrice} />
+      
       <InteractiveScrollBackground />
       <Toaster position="bottom-right" />
       {activeTab === "explore" && <UnifiedCoinSwarm />}
@@ -480,25 +509,9 @@ function PlatformLayout() {
                    <div className="flex items-center gap-8 bg-[#0a0b12]/80 backdrop-blur-md border border-white/10 px-12 py-6 rounded-3xl text-slate-400 tracking-widest text-xs shadow-inner not-italic"><Activity className="text-emerald-500 w-6 h-6" /> NETWORK OPTIMAL</div>
                  </div>
 
-                 <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16 bg-white/5 border border-white/10 p-4 rounded-3xl backdrop-blur-md shadow-2xl">
-                    <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
-                      <button className="bg-blue-600 text-white px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest whitespace-nowrap shadow-lg">All Assets</button>
-                      <button className="bg-transparent text-slate-400 hover:text-white hover:bg-white/5 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap">Live Ledgers</button>
-                      <button className="bg-transparent text-slate-400 hover:text-white hover:bg-white/5 px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap">Fully Funded</button>
-                    </div>
-                    <div className="flex items-center gap-4 w-full md:w-auto">
-                      <div className="relative w-full md:w-auto">
-                        <div className="flex items-center justify-between bg-black/50 border border-white/10 px-6 py-4 rounded-2xl text-xs font-black text-slate-300 uppercase tracking-widest cursor-pointer hover:border-white/30 transition-all w-full md:w-56 shadow-inner">
-                          <span className="flex items-center gap-3"><Filter className="w-4 h-4 text-blue-400" /> Sort By: Newest</span>
-                          <ChevronDown className="w-4 h-4 text-slate-500" />
-                        </div>
-                      </div>
-                    </div>
-                 </div>
-
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
                    {deployedPools?.length > 0 ? (
-                     deployedPools.map((addr, i) => <ProjectCard key={i} contractAddress={addr} index={i} />)
+                     deployedPools.map((addr, i) => <ProjectCard key={i} contractAddress={addr} index={i} ethPrice={ethPrice} />)
                    ) : (
                      <div className="col-span-full py-48 border border-dashed border-white/10 rounded-[5rem] bg-[#0a0b12]/60 backdrop-blur-xl text-center shadow-2xl italic font-black uppercase tracking-tighter">
                         <Boxes className="w-24 h-24 text-slate-600 mx-auto mb-12 not-italic" />
@@ -628,27 +641,30 @@ function PlatformLayout() {
           {activeTab === "portfolio" && (
             <motion.div key="portfolio" className="max-w-6xl mx-auto mt-12 px-8 text-center">
                <h2 className="text-6xl lg:text-7xl font-black text-white mb-12 italic uppercase tracking-tighter overflow-visible text-center mx-auto">Asset Vault</h2>
+               
+               {/* 🌟 UPDATED: Live USD totals for Portfolio 🌟 */}
                <div className="grid md:grid-cols-3 gap-8 mb-16 text-left">
                   <div className="bg-[#0a0b12]/90 backdrop-blur-xl border border-white/5 p-8 lg:p-10 rounded-[2.5rem] shadow-2xl hover:border-white/10 transition-all flex flex-col items-center sm:items-start">
                     <Tooltip content="The aggregated value of all your active smart contract positions.">
                       <div className="flex items-center gap-3 text-slate-500 font-black uppercase text-[10px] lg:text-xs tracking-[0.3em] mb-6 cursor-help hover:text-blue-400 transition-colors"><BarChart3 className="w-6 h-6 text-blue-500" /> Total Committed <Info className="w-3 h-3" /></div>
                     </Tooltip>
-                    <p className="text-5xl lg:text-6xl font-black text-white">{parseFloat(ethers.utils.formatEther(totalCommittedETH)).toFixed(4)} <span className="text-lg text-slate-600 font-bold italic uppercase tracking-widest">ETH</span></p>
+                    <p className="text-4xl lg:text-5xl font-black text-white">{portfolioEthValue.toFixed(4)} <span className="text-lg text-slate-600 font-bold italic uppercase tracking-widest">ETH</span></p>
+                    <p className="text-emerald-500/80 text-sm font-bold mt-2 tracking-widest">≈ {portfolioUsdValue}</p>
                   </div>
                   <div className="bg-[#0a0b12]/90 backdrop-blur-xl border border-white/5 p-8 lg:p-10 rounded-[2.5rem] shadow-2xl hover:border-white/10 transition-all flex flex-col items-center sm:items-start">
                     <div className="flex items-center gap-3 text-slate-500 font-black uppercase text-[10px] lg:text-xs tracking-[0.3em] mb-6"><LineChart className="w-6 h-6 text-emerald-500" /> Yield (Est.)</div>
-                    <p className="text-5xl lg:text-6xl font-black text-white">{activePositionsCount > 0 ? "12.4" : "0.0"} <span className="text-lg text-slate-600 font-bold italic uppercase tracking-widest">% APY</span></p>
+                    <p className="text-4xl lg:text-5xl font-black text-white">{activePositionsCount > 0 ? "12.4" : "0.0"} <span className="text-lg text-slate-600 font-bold italic uppercase tracking-widest">% APY</span></p>
                   </div>
                   <div className="bg-[#0a0b12]/90 backdrop-blur-xl border border-white/5 p-8 lg:p-10 rounded-[2.5rem] shadow-2xl hover:border-white/10 transition-all flex flex-col items-center sm:items-start">
                     <div className="flex items-center gap-3 text-slate-500 font-black uppercase text-[10px] lg:text-xs tracking-[0.3em] mb-6"><Boxes className="w-6 h-6 text-purple-500" /> Active Positions</div>
-                    <p className="text-5xl lg:text-6xl font-black text-white">{activePositionsCount} <span className="text-lg text-slate-600 font-bold italic uppercase tracking-widest">Assets</span></p>
+                    <p className="text-4xl lg:text-5xl font-black text-white">{activePositionsCount} <span className="text-lg text-slate-600 font-bold italic uppercase tracking-widest">Assets</span></p>
                   </div>
                </div>
 
                <div className="max-w-5xl mx-auto">
                  <div className="space-y-6 text-left">
                    {connectedWallet && deployedPools?.map(poolAddress => (
-                      <VaultPositionCard key={poolAddress} contractAddress={poolAddress} walletAddress={connectedWallet} onFetch={handleInvestmentFetch} />
+                      <VaultPositionCard key={poolAddress} contractAddress={poolAddress} walletAddress={connectedWallet} onFetch={handleInvestmentFetch} ethPrice={ethPrice} />
                    ))}
                  </div>
                  {(!connectedWallet || activePositionsCount === 0) && (
